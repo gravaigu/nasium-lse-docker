@@ -1,0 +1,30 @@
+iolib.termios - an iolib (http://common-lisp.net/project/iolib)
+extension for RS-422/485/232 (aka serial) interfaces - i.e. termios (3)
+api common lisp wrappers with some stream abstraction.
+
+API:
+
+(documentation 'itty:with-serial-stream 'function)
+
+(documentation 'itty:stty 'function)
+
+SUPPORTED PLATFORMS:
+
+In theory it should work on all posix platforms supported by iolib. 
+
+Tested (rx<->tx connected echo) on sbcl 1.0.44, ccl 1.5, ecl 10.7.1,
+cmucl 20b and clisp 2.49 on linux x86 (32 bit) host with recent
+quicklisp distribution.
+
+TODO:
+
+0 Checking right `#+' and `#-' for non posix features.
+
+1 Testing on other OS and lisp implementation. 
+
+2 Testing units.
+
+3 Restarts on i/o methods.
+
+4 Streams class and methods for 9-bit mode (using parity checking bits
+  for data too). 
