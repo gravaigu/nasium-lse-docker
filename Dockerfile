@@ -72,9 +72,10 @@ RUN NASIUM_LSE_TAG="nasium-lse--202202-1" && \
     cd nasium-lse-"$NASIUM_LSE_TAG"* && \
     NASIUM_LSE="$(pwd)" && \
     cd "${NASIUM_LSE}/dependencies/" && \
-    mv /iolib.termios . && \
     git clone https://github.com/sionescu/libfixposix.git && \
     git clone https://framagit.org/com-informatimago/com-informatimago.git && \
+    git clone https://github.com/marsijanin/iolib.termios.git && \
+    sed -i 's/iolib\/base/iolib.base/' iolib.termios/iolib.termios.asd && \
     cd "${NASIUM_LSE}/src/" && \
     make cli && \
     cp lse /usr/local/bin && \
