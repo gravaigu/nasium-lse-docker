@@ -53,14 +53,20 @@ RUN CCL_VERSION="1.11.5" && \
     ln -s /opt/ccl/lx86cl64 /usr/local/bin/ccl && \
     rm -rf ccl $FILENAME
 
-COPY . .
+#COPY . .
 RUN FILENAME="quicklisp.lisp" && \
     DOWNLOAD_URL="http://beta.quicklisp.org/$FILENAME" && \
     busybox wget "$DOWNLOAD_URL" && \
     ccl --load quicklisp.lisp \
         --eval '(quicklisp-quickstart:install)' \
         --eval '(quit)' && \
-    mv .ccl-init.lisp /root && \
+#    mv .ccl-init.lisp /root && \
+    echo \
+';;; The following lines added by ql:add-to-init-file:\n\
+#-quicklisp\n\
+(let ((quicklisp-init (merge-pathnames "quicklisp/setup.lisp" (user-homedir-pathname))))\n\
+(when (probe-file quicklisp-init)\n\
+    (load quicklisp-init)))' >/root/.ccl-init.lisp && \
     rm $FILENAME
 
 RUN NASIUM_LSE_TAG="nasium-lse--202202-1" && \
