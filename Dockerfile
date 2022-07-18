@@ -53,20 +53,18 @@ RUN CCL_VERSION="1.11.5" && \
     ln -s /opt/ccl/lx86cl64 /usr/local/bin/ccl && \
     rm -rf ccl $FILENAME
 
-#COPY . .
 RUN FILENAME="quicklisp.lisp" && \
     DOWNLOAD_URL="http://beta.quicklisp.org/$FILENAME" && \
     busybox wget "$DOWNLOAD_URL" && \
     ccl --load quicklisp.lisp \
         --eval '(quicklisp-quickstart:install)' \
         --eval '(quit)' && \
-#    mv .ccl-init.lisp /root && \
     echo \
-';;; The following lines added by ql:add-to-init-file:\n\
-#-quicklisp\n\
-(let ((quicklisp-init (merge-pathnames "quicklisp/setup.lisp" (user-homedir-pathname))))\n\
-(when (probe-file quicklisp-init)\n\
-    (load quicklisp-init)))' >/root/.ccl-init.lisp && \
+        ";;; The following lines added by ql:add-to-init-file:\
+        #-quicklisp\
+        (let ((quicklisp-init (merge-pathnames \"quicklisp/setup.lisp\" (user-homedir-pathname))))\
+        (when (probe-file quicklisp-init)\
+            (load quicklisp-init)))" | sed 's/   */\n/g' >/root/.ccl-init.lisp && \
     rm $FILENAME
 
 RUN NASIUM_LSE_TAG="nasium-lse--202202-1" && \
@@ -75,7 +73,9 @@ RUN NASIUM_LSE_TAG="nasium-lse--202202-1" && \
     busybox wget "$DOWNLOAD_URL" && \
     apk add --no-cache --virtual=.build-dependencies g++ make linux-headers libfixposix-dev git && \
     tar zxf $FILENAME && \
-    cd nasium-lse-"$NASIUM_LSE_TAG"* && \
+    rm $FILENAME && \
+    ln -s nasium-lse-"$NASIUM_LSE_TAG"* nasium-lse && \
+    cd nasium-lse && \
     NASIUM_LSE="$(pwd)" && \
     cd "${NASIUM_LSE}/dependencies/" && \
     git clone https://github.com/sionescu/libfixposix.git && \
@@ -84,14 +84,11 @@ RUN NASIUM_LSE_TAG="nasium-lse--202202-1" && \
     sed -i 's/iolib\/base/iolib.base/' iolib.termios/iolib.termios.asd && \
     cd "${NASIUM_LSE}/src/" && \
     make cli && \
-    cp lse /usr/local/bin && \
-    apk del .build-dependencies && \
-    rm -rf $NASIUM_LSE $FILENAME
+    apk del .build-dependencies
 
 
 FROM alpine:3.15.0
 
-WORKDIR /app
 ENV LC_ALL fr_FR.UTF-8
 
 RUN apk add --no-cache libfixposix ncurses-terminfo busybox-extras
@@ -134,6 +131,11 @@ RUN ALPINE_GLIBC_BASE_URL="https://github.com/sgerrand/alpine-pkg-glibc/releases
         "$ALPINE_GLIBC_BIN_PACKAGE_FILENAME" \
         "$ALPINE_GLIBC_I18N_PACKAGE_FILENAME"
 
-COPY --from=build /usr/local/bin/lse /usr/local/bin/
-
-ENTRYPOINT ["/usr/local/bin/lse"]
+COPY --from=build /nasium-lse/src/lse /srv/lse/bin/
+COPY --from=build /nasium-lse/servers/lse-inetd.sh /srv/lse/scripts/
+COPY --from=build /nasium-lse/servers/inetd.conf /etc/
+COPY run.sh /
+RUN sed -i 's/lse/root/' /etc/inetd.conf && \
+    chmod +x run.sh && \
+    mkdir -p /srv/lse/files
+CMD ["/run.sh"]
